@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rabbitmq
+  template:
+    metadata:
+      labels:
+        app: rabbitmq
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:management
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5672
+              name: rabbitmq-port
+            - containerPort: 15672
+              name: rabbitmq-cons
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-rabbitmq
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: init-rabbitmq
+    spec:
+      containers:
+        - name: init-rabbitmq
+          image: nasqueron/rabbitmqadmin:latest
+          env:
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+          command: ["/bin/ash"]
+          args: ["/etc/init/init.sh"]
+          volumeMounts:
+            - name: init-rabbitmq
+              mountPath: /etc/init
+
+      volumes:
+        - name: init-rabbitmq
+          configMap:
+            name: init-rabbitmq
+      restartPolicy: OnFailure
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: init-rabbitmq
+data:
+  init.sh: |-
+    #!/bin/ash
+
+    set -e -x -u
+
+    alias rabbitmqadmin="python /usr/local/bin/rabbitmqadmin --host=${RABBITMQ_HOST}"
+    
+    rabbitmqadmin declare exchange name=ExportExchange type=direct
+
+    rabbitmqadmin declare queue name=ExportRequestsQueue durable=true
+    rabbitmqadmin declare queue name=ExportCompletedQueue durable=true
+
+    rabbitmqadmin declare binding source=ExportExchange \
+    destination=ExportRequestsQueue \
+    routing_key=export.request
+
+    rabbitmqadmin declare binding source=ExportExchange \
+    destination=ExportCompletedQueue \
+    routing_key=export.completed
+  
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  labels:
+    app: rabbitmq
+spec:
+  selector:
+    app: rabbitmq
+  ports:
+    - name: rabbitmq-port
+      port: 5672
+    - name: rabbitmq-cons
+      port: 15672

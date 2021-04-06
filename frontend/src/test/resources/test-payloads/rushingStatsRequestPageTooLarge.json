@@ -1,0 +1,4 @@
+{
+  "query": "query {  rushingStats(    pagedSelection: {      selection: {        requestedPlayers: [],        maybeSortBy : {sortField: LNG, sortOrder: DESC}      },       page: {        index: 0,        size: 101      }    }) {    player,    team,    pos,    att,    att_G,    yds,    avg,    yds_G    td,    lng,    rushingFirstDowns,    rushingFirstDownPercentage,    twentyPlus,    fortyPlus,    fum  }}",
+  "variables": null
+}

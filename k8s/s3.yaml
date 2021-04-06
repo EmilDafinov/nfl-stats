@@ -1,0 +1,103 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3-mock
+  labels:
+    app: s3-mock
+spec:
+  selector:
+    app: s3-mock
+  ports:
+    - name: s3-port
+      port: 4566
+      targetPort: s3-http-port
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3-mock
+  labels:
+    app: s3-mock
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: s3-mock
+  template:
+    metadata:
+      labels:
+        app: s3-mock
+    spec:
+      containers:
+        - name: s3-mock
+          image: localstack/localstack:0.11.2
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 4566
+              name: s3-http-port
+          env:
+            - name: LOCALSTACK_SERVICES
+              value: s3
+            - name: DEBUG
+              value: "1"
+            - name: DATA_DIR
+              value: /tmp/localstack/data
+
+---
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-s3
+spec:
+  parallelism: 1
+  completions: 1
+  template:
+    metadata:
+      name: init-s3
+    spec:
+      containers:
+        - name: init-s3
+          image: amazon/aws-cli:2.1.30
+          command : ["sh"]
+          args : ["/root/.aws/init-s3.sh"]
+          env:
+            - name: AWS_DEFAULT_REGION
+              value: us-east-1
+            - name: BUCKET
+              value: export-bucket
+          volumeMounts:
+            - name: init
+              mountPath: /root/.aws  
+      volumes:
+        - name: init
+          configMap:
+            name: s3-config
+      restartPolicy: OnFailure
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: s3-config
+data:
+  config: |-
+    [default]
+  
+  credentials: |-
+    [default]
+    aws_access_key_id = dummy
+    aws_secret_access_key = dummy
+  
+  init-s3.sh: |-
+    #!/bin/bash
+
+    set -e -x -u
+    
+    alias awscli="aws --endpoint-url=http://s3-mock:4566"
+
+    awscli s3 mb s3://${BUCKET}
+    awscli s3api put-bucket-acl --bucket ${BUCKET} --acl public-read-write

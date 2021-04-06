@@ -1,0 +1,37 @@
+{
+  "data" : {
+    "rushingStats" : [ {
+      "player" : "APlayer",
+      "team" : "ScaryAnimals",
+      "pos" : "front",
+      "att" : 1,
+      "att_G" : 12.34,
+      "yds" : 5,
+      "avg" : 23.45,
+      "yds_G" : 34.45,
+      "td" : 1,
+      "lng" : "2T",
+      "rushingFirstDowns" : 3,
+      "rushingFirstDownPercentage" : 12.0,
+      "twentyPlus" : 2,
+      "fortyPlus" : 6,
+      "fum" : 8
+    }, {
+      "player" : "APlayer2",
+      "team" : "NonScaryAnimals",
+      "pos" : "back",
+      "att" : 2,
+      "att_G" : 13.34,
+      "yds" : 6,
+      "avg" : 24.45,
+      "yds_G" : 35.45,
+      "td" : 2,
+      "lng" : "3",
+      "rushingFirstDowns" : 4,
+      "rushingFirstDownPercentage" : 13.0,
+      "twentyPlus" : 3,
+      "fortyPlus" : 7,
+      "fum" : 9
+    } ]
+  }
+}

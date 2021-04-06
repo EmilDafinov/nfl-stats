@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-config
+  labels:
+    app: mysql
+data:
+  mysql.cnf: |-
+    [mysqld]
+    default_authentication_plugin=mysql_native_password
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  type: LoadBalancer
+  selector:
+    app: mysql
+  ports:
+    - name: mysql-port
+      port: 3306
+      targetPort: mysql-port
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      volumes:
+        - name: mysql-config
+          configMap:
+            name: mysql-config
+      containers:
+        - name: mysql
+          image: mysql:8.0.15
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: password
+          ports:
+            - containerPort: 3306
+              name: mysql-port
+          volumeMounts:
+            - name: mysql-config
+              mountPath: /etc/mysql/conf.d/          

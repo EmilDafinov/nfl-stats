@@ -1,0 +1,4 @@
+{
+  "query": "query {exports(page: {index: 0, size: 101}) {    uuid, createdOn, status  }}",
+  "variables": null
+}

@@ -1,0 +1,126 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: default
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: nfl-stats-frontend
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+            - name: JAVA_OPTS
+              value: "-server -Xms384m -Xmx384m -XX:MaxMetaspaceSize=96m -Dconfig.file=/config/application.conf"
+          ports:
+            - containerPort: 9000
+              name: app-port
+            - containerPort: 5005
+              name: debug-port
+          volumeMounts:
+            - name: application-conf
+              mountPath: /config
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9000
+              scheme: HTTP
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+      volumes:
+        - name: application-conf
+          configMap:
+            name: frontend-config
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+data:
+  application.conf: |-
+
+    rabbitmq {
+      user = guest
+      password = guest
+      vhost = /
+      host = rabbitmq
+      port = 5672
+      
+      export {
+        exchange = ExportExchange
+        completed.queue = ExportCompletedQueue
+        request.routing.key = export.request
+      }
+    }
+
+    s3 {
+      export.bucket.name = "export-bucket"
+      path-style-access = true
+      aws {
+        credentials {
+          access-key-id = "dummy"
+          secret-access-key = "dummy"
+        }
+        region =  "us-east-1"
+      }
+      endpoint-url = "http://s3-mock.default.svc.cluster.local:4566"
+    }
+    
+    nfl {
+      profile = "slick.jdbc.MySQLProfile$"
+      db {
+        url = "jdbc:mysql://mysql:3306/nfl?createDatabaseIfNotExist=true&useSSL=false"
+        user = "root"
+        password = "password"
+        driver = com.mysql.jdbc.Driver
+        numThreads = 2
+        connectionTimeout = 20000
+        initializationFailTimeout = 20000
+      }
+      //https://github.com/brettwooldridge/HikariCP/wiki/MySQL-Configuration
+      properties {
+        cachePrepStmts = true
+        prepStmtCacheSize = 250
+        prepStmtCacheSqlLimit = 2048
+        useServerPrepStmts = true
+        useLocalSessionState = true
+        rewriteBatchedStatements = true
+        cacheResultSetMetadata = true
+        cacheServerConfiguration = true
+        elideSetAutoCommits = true
+        maintainTimeStats = false
+      }
+    }
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - name: service-port
+      port: 9000
+      targetPort: app-port
+    - name: debug-port
+      port: 5005

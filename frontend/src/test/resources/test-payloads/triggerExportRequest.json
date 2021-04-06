@@ -1,0 +1,4 @@
+{
+  "query": "mutation {  exportRushingStats(selection: {        requestedPlayers: [\"A Player\"],        maybeSortBy : {sortField: LNG, sortOrder: DESC}  }) }",
+  "variables": null
+}

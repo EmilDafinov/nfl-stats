@@ -1,0 +1,43 @@
+{
+	"info": {
+		"_postman_id": "b4714a40-cc2d-4585-b78d-0b95341a0b0b",
+		"name": "NFL",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health endpoint",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{ui-service-host}}/health",
+					"host": [
+						"{{ui-service-host}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Download an export",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{ui-service-host}}/health",
+					"host": [
+						"{{ui-service-host}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

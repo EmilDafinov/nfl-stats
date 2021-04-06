@@ -1,0 +1,23 @@
+apiVersion: skaffold/v2beta5
+kind: Config
+build:
+  tagPolicy:
+    gitCommit: {}
+  artifacts:
+    - image: nfl-stats-frontend
+      custom:
+        dependencies:
+          paths:
+            - "frontend/src/main"
+        buildCommand: "./src/main/script/buildImage.sh frontend"
+    - image: nfl-stats-export-generator
+      custom:
+        dependencies:
+          paths:
+            - "exportGenerator/src/main"
+        buildCommand: "./src/main/script/buildImage.sh exportGenerator"
+metadata:
+  name: nfl-stats
+deploy:
+  statusCheckDeadlineSeconds: 720
+  kubectl:
